@@ -1,69 +1,52 @@
 services:
-  postgres:
-    image: postgres:18-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: meu_banco
-    ports:
-      - "5434:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-  
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-  
   api-product:
-    build: 
-      context: ./api1-rabbitmq
-      dockerfile: Dockerfile.product
-    restart: always
+    image: jeacd/sys-dist:produtor
+    deploy:
+      replicas: 2
+      placement:
+        constraints: [node.role==worker]
     ports:
       - "8080:8080"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: 10.10.136.10
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_RABBITMQ_USERNAME: laced
+      SPRING_RABBITMQ_PASSWORD: l4bl4c3d
+      SPRING_RABBITMQ_VHOST: sd-projeto
       SPRING_RABBITMQ_EXCHANGE: produto.exchange
       SPRING_RABBITMQ_QUEUE: produto.queue 
       SPRING_RABBITMQ_ROUTINGKEY: produto.routingkey
       SERVER_PORT: 8080
   api-consumer:
-    build: 
-      context: ./api2-rabbitmq
-      dockerfile: Dockerfile.consumer
-    restart: always
+    image: jeacd/sys-dist:consumidor
+    deploy:
+      replicas: 2
+      placement:
+        constraints: [node.role==worker]
     ports:
       - "9090:9090"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/meu_banco
+      SPRING_DATASOURCE_URL: jdbc:postgresql://10.10.136.16:5432/produtos_ms
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 12345
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_RABBITMQ_HOST: 10.10.136.10
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_RABBITMQ_USERNAME: laced
+      SPRING_RABBITMQ_PASSWORD: l4bl4c3d
+      SPRING_RABBITMQ_VHOST: sd-projeto
       SERVER_PORT: 9090
       SPRING_RABBITMQ_QUEUE: produto.queue 
+  front-produtos:
+    image: jeacd/sys-dist:front-produtos
+    deploy:
+      placement:
+        constraints: [node.role==manager]
+    
+    ports:
+      - "3000:80"
+    environment:
+      - PROD_HOST=http://api-product:8080
+      - CONS_HOST=http://api-consumer:9090
       
