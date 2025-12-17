@@ -11,6 +11,7 @@ import lombok.*;
 @Getter
 @Setter
 @Entity
+@Data
 public class Produto {
 
     @Id

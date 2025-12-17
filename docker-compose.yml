@@ -18,6 +18,8 @@ services:
       SPRING_RABBITMQ_QUEUE: produto.queue 
       SPRING_RABBITMQ_ROUTINGKEY: produto.routingkey
       SERVER_PORT: 8080
+      SPRING_REDIS_HOST: 10.10.136.10
+      SPRING_REDIS_PORT: 6379
   api-consumer:
     image: jeacd/sys-dist:consumidor
     deploy:
@@ -37,7 +39,9 @@ services:
       SPRING_RABBITMQ_PASSWORD: l4bl4c3d
       SPRING_RABBITMQ_VHOST: sd-projeto
       SERVER_PORT: 9090
-      SPRING_RABBITMQ_QUEUE: produto.queue 
+      SPRING_RABBITMQ_QUEUE: produto.queue
+      SPRING_REDIS_HOST: 10.10.136.10
+      SPRING_REDIS_PORT: 6379
   front-produtos:
     image: jeacd/sys-dist:front-produtos
     deploy:
